@@ -1,0 +1,35 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Environment variables
+.env
+.env.*
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+
+# Build files
+dist/
+build/
+.next/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated evidence
+data/evidence/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,52 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: sentinel
+      MYSQL_USER: sentinel
+      MYSQL_PASSWORD: sentinel
+      MYSQL_ROOT_PASSWORD: sentinel_root
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - sentinel_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "sentinel", "-psentinel"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  darkshop:
+    build:
+      context: ./darkshop
+    ports:
+      - "9000:9000"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      DATABASE_URL: mysql+pymysql://sentinel:sentinel@mysql:3306/sentinel
+      DARKSHOP_URL: http://darkshop:9000
+    depends_on:
+      mysql:
+        condition: service_healthy
+      darkshop:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+volumes:
+  sentinel_mysql:
