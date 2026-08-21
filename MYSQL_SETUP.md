@@ -1,4 +1,4 @@
-# MySQL Setup
+# MySQL Setup (dont refer as shifted to postgress)
 
 ## Easiest team setup
 
