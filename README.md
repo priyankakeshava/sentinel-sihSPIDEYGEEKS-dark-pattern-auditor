@@ -5,7 +5,7 @@ This is the **Government Auditor** MVP. The Citizen Browser Extension is intenti
 ## What the prototype actually does
 
 1. Starts a controlled demo commerce website with a manipulative mode and a clean control mode.
-2. FastAPIabc creates an audit record and launches Playwright.
+2. FastAPI creates an audit record and launches Playwright.
 3. Playwright performs Search → Product → Cart → Review → Checkout.
 4. Every step gets a real screenshot and captured browser state.
 5. Detectors inspect observed state:
