@@ -53,4 +53,3 @@ The existing Windows and macOS/Linux scripts can still be used for development. 
 ## Scope discipline
 
 The extension, full 13-category coverage, production-scale crawling and advanced multilingual model are future phases. The MVP proves the central evidence engine first.
-abcd
