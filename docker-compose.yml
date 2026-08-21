@@ -1,21 +1,19 @@
 services:
-  mysql:
-    image: mysql:8.4
+  postgres:
+    image: postgres:15-alpine
     environment:
-      MYSQL_DATABASE: sentinel
-      MYSQL_USER: sentinel
-      MYSQL_PASSWORD: sentinel
-      MYSQL_ROOT_PASSWORD: sentinel_root
+      POSTGRES_DB: sentinel
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: sentinel
     ports:
-      - "3306:3306"
-    
+      - "5432:5432"
     volumes:
-      - sentinel_mysql:/var/lib/mysql
+      - sentinel_postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "sentinel", "-psentinel"]
+      test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinel"]
       interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 5
 
   darkshop:
     build:
@@ -28,10 +26,10 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      DATABASE_URL: mysql+pymysql://sentinel:sentinel@mysql:3306/sentinel
+      DATABASE_URL: postgresql://sentinel:sentinel@postgres:5432/sentinel
       DARKSHOP_URL: http://darkshop:9000
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
       darkshop:
         condition: service_started
@@ -49,4 +47,4 @@ services:
       - "5173:5173"
 
 volumes:
-  sentinel_mysql:
+  sentinel_postgres:
