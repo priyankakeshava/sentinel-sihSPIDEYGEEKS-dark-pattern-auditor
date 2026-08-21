@@ -1,6 +1,12 @@
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
 sqlalchemy==2.0.43
-pymysql==1.1.1
+psycopg2-binary==2.9.9
 playwright==1.54.0
 pydantic==2.11.7
+transformers==4.38.2
+torch==2.2.1
+requests==2.31.0
+numpy<2.0.0
+sentencepiece==0.2.0
+protobuf==4.25.3
