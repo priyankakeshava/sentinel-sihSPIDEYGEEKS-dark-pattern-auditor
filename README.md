@@ -558,12 +558,6 @@ The system can eventually support more dark-pattern categories, Indian languages
 
 Developed as a Smart India Hackathon prototype focused on automated regulatory auditing and consumer protection.
 
-## License
-
-This project is licensed under the **Apache License 2.0**.
-
-See the `LICENSE` file for the full license text.
-
 ## Disclaimer
 
 SENTINEL is a research and hackathon prototype intended to demonstrate automated auditing, behavioural verification, and evidence collection.
