@@ -2,7 +2,7 @@
 
 This is the **Government Auditor** MVP. The Citizen Browser Extension is intentionally not part of the 36-hour core build.
 
-## What the prototype actually does
+## What the prototype actually does 
 
 1. Starts a controlled demo commerce website with a manipulative mode and a clean control mode.
 2. FastAPI creates an audit record and launches Playwright.
