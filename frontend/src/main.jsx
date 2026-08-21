@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
 
-const API = "http://127.0.0.1:8000";
+const API = "http://127.0.0.1:8999";
 
 const NAV = [
   ["console", "Investigation Console"],
