@@ -343,6 +343,220 @@ SHOP = os.getenv(
 
 
 # ============================================================
+# AUDIT ACTION MANIFEST
+# ============================================================
+#
+# Closes Round 1 feedback: "Each audit action must be explainable."
+#
+# One manifest entry per journey step. This describes, for the
+# Why? drawer in the UI, what Sentinel was testing at that step,
+# why, and which policy hypothesis it was checking — before any
+# finding is even produced.
+#
+STEP_MANIFEST = {
+    "Search": {
+        "intent": "Establish baseline product and price before any "
+                   "journey manipulation can occur.",
+        "action": "Load the search/landing page and record the "
+                   "advertised product and price.",
+        "rationale": "A clean baseline is required so later steps "
+                      "can be compared against what the user was "
+                      "originally shown.",
+        "hypothesis": "The advertised price and product identity "
+                        "should remain stable across the journey "
+                        "unless explicitly changed by the user.",
+        "authority": "CCPA Dark Patterns Guidelines 2023 — baseline "
+                      "disclosure principle",
+        "expected_observation": "Visible price and product name "
+                                  "captured for later diffing.",
+        "evidence_required": ["screenshot", "url", "visible_price"],
+    },
+    "Product": {
+        "intent": "Test whether time-pressure or scarcity claims are "
+                   "shared/absolute or session-generated.",
+        "action": "Open the product page and record any countdown "
+                    "timer or urgency/scarcity copy.",
+        "rationale": "False Urgency requires behavioral proof, not "
+                      "just text — a real deadline should not reset "
+                      "per session.",
+        "hypothesis": "If the countdown is a real shared deadline, a "
+                        "fresh isolated browser session should see "
+                        "the same remaining time, not a fresh timer.",
+        "authority": "CCPA Dark Patterns Guidelines 2023 — False "
+                      "Urgency",
+        "expected_observation": "Timer value consistent across a "
+                                  "base session and a fresh "
+                                  "BrowserContext replay.",
+        "evidence_required": ["screenshot", "timer_value", "context_id",
+                               "replay_timer_value"],
+    },
+    "Cart": {
+        "intent": "Test whether optional items are added to the cart "
+                    "without explicit user authorization.",
+        "action": "Add the core product to cart, explicitly leave the "
+                    "optional add-on checkbox unchecked, then capture "
+                    "cart state.",
+        "rationale": "Basket Sneaking requires an evidenced mismatch "
+                      "between what the user authorized and what "
+                      "ended up in the cart.",
+        "hypothesis": "No optional paid item should appear in the "
+                        "cart unless a matching AuthorizationEvent "
+                        "(a checked opt-in) exists.",
+        "authority": "CCPA Dark Patterns Guidelines 2023 — Basket "
+                      "Sneaking",
+        "expected_observation": "Cart contents must match "
+                                  "authorization events; any "
+                                  "mismatch is evidence.",
+        "evidence_required": ["cart_before", "cart_after",
+                               "checkbox_state", "screenshot"],
+    },
+    "Review": {
+        "intent": "Capture the total price shown to the user before "
+                    "final commitment, to test for drip pricing.",
+        "action": "Navigate to the review/order-summary page and "
+                    "record the displayed total.",
+        "rationale": "Drip Pricing requires a documented price at an "
+                      "earlier step to compare against the final "
+                      "checkout total.",
+        "hypothesis": "The total shown at Review should match the "
+                        "total shown at Checkout; a later increase is "
+                        "an undisclosed mandatory fee.",
+        "authority": "CCPA Dark Patterns Guidelines 2023 — Drip "
+                      "Pricing",
+        "expected_observation": "Review total recorded as the "
+                                  "pre-commitment reference price.",
+        "evidence_required": ["review_total", "timestamp", "screenshot"],
+    },
+    "Checkout": {
+        "intent": "Test for undisclosed fees, forced consent gating, "
+                    "and guilt-oriented decline wording at the final "
+                    "commitment step.",
+        "action": "Load checkout, record the final total, inspect the "
+                    "payment gate for unrelated required consent, and "
+                    "capture the decline-option wording.",
+        "rationale": "This is where Drip Pricing, Forced Action and "
+                      "Confirm Shaming evidence all resolve, since "
+                      "it's the last step before commitment.",
+        "hypothesis": "Final total should equal the Review total; "
+                        "payment should not require unrelated consent; "
+                        "decline wording should be neutral.",
+        "authority": "CCPA Dark Patterns Guidelines 2023 — Drip "
+                      "Pricing / Forced Action / Confirm Shaming",
+        "expected_observation": "Checkout total, consent-gate state, "
+                                  "and decline-copy wording all "
+                                  "captured as evidence.",
+        "evidence_required": ["checkout_total", "consent_gate_state",
+                               "decline_copy", "screenshot"],
+    },
+}
+
+
+# ============================================================
+# POLICY & AUTHORITY REGISTRY
+# ============================================================
+#
+# Closes Round 1 feedback: "Every finding needs authority + mechanism."
+#
+# Keyed by Finding.pattern_type. A finding is only "review-ready" once
+# it carries a policy_id, version, authority reference, mechanism and
+# its required evidence predicates — this registry is what the API
+# attaches to every finding it returns.
+#
+POLICY_REGISTRY = {
+    "Basket Sneaking": {
+        "policy_id": "ccpa-dark-patterns-2023-basket-sneaking-v1",
+        "category": "Basket Sneaking",
+        "authority_refs": [
+            "CCPA Guidelines for Prevention and Regulation of Dark "
+            "Patterns, 2023"
+        ],
+        "mechanism": "Cart diff after an authorized action. An "
+                      "optional paid addition without a matching "
+                      "AuthorizationEvent (checked opt-in) is flagged.",
+        "required_predicates": ["cart_before", "cart_after",
+                                  "checkbox_state"],
+        "clean_control": "Explicit opt-in (checked box) produces the "
+                           "same add-on with no finding.",
+        "reviewRequirement": "Always human review — machine output "
+                               "is a candidate, never a verdict.",
+    },
+    "Drip Pricing": {
+        "policy_id": "ccpa-dark-patterns-2023-drip-pricing-v1",
+        "category": "Drip Pricing",
+        "authority_refs": [
+            "CCPA Guidelines for Prevention and Regulation of Dark "
+            "Patterns, 2023"
+        ],
+        "mechanism": "Price provenance ledger tracks the displayed "
+                      "total at Review vs. Checkout; an increase "
+                      "without disclosure is flagged.",
+        "required_predicates": ["review_total", "checkout_total"],
+        "clean_control": "Mandatory fee disclosed from the first "
+                           "total shown produces no finding.",
+        "reviewRequirement": "Always human review — machine output "
+                               "is a candidate, never a verdict.",
+    },
+    "Forced Action": {
+        "policy_id": "ccpa-dark-patterns-2023-forced-action-v1",
+        "category": "Forced Action",
+        "authority_refs": [
+            "CCPA Guidelines for Prevention and Regulation of Dark "
+            "Patterns, 2023"
+        ],
+        "mechanism": "Detects an unrelated consent/enrollment "
+                      "requirement gating an intended task (payment).",
+        "required_predicates": ["consent_checked", "pay_button_disabled"],
+        "clean_control": "Unrelated consent remains optional/"
+                           "unselected and the journey proceeds.",
+        "reviewRequirement": "Always human review — machine output "
+                               "is a candidate, never a verdict.",
+    },
+    "Confirm Shaming": {
+        "policy_id": "ccpa-dark-patterns-2023-confirm-shaming-v1",
+        "category": "Confirm Shaming",
+        "authority_refs": [
+            "CCPA Guidelines for Prevention and Regulation of Dark "
+            "Patterns, 2023"
+        ],
+        "mechanism": "Extracts the accept/decline pair and scores "
+                      "the decline wording for guilt/fear/loss cues.",
+        "required_predicates": ["decline_text", "matched_cue"],
+        "clean_control": "Neutral \"No thanks\"-style wording produces "
+                           "no finding.",
+        "reviewRequirement": "Always human review — machine output "
+                               "is a candidate, never a verdict.",
+        "detector_method": "keyword-cue heuristic v1 (rule-based). "
+                             "Per the ML specification, this is an "
+                             "honest placeholder — a benchmarked "
+                             "XLM-R vs IndicBERT classifier is planned "
+                             "and NOT yet trained, so no accuracy "
+                             "figure is reported for it.",
+    },
+    "False Urgency": {
+        "policy_id": "ccpa-dark-patterns-2023-false-urgency-v1",
+        "category": "False Urgency",
+        "authority_refs": [
+            "CCPA Guidelines for Prevention and Regulation of Dark "
+            "Patterns, 2023"
+        ],
+        "mechanism": "Compares a countdown timer's behavior across "
+                      "the base session and a fresh isolated "
+                      "BrowserContext. A timer that decreases in the "
+                      "base session but resets in a fresh context "
+                      "indicates a per-session fake deadline rather "
+                      "than a shared, real one.",
+        "required_predicates": ["session_1_start", "session_1_after",
+                                  "fresh_session_start"],
+        "clean_control": "A shared absolute-expiry countdown "
+                           "continues across sessions and produces no "
+                           "finding.",
+        "reviewRequirement": "Always human review — machine output "
+                               "is a candidate, never a verdict.",
+    },
+}
+
+
+# ============================================================
 # REQUEST MODELS
 # ============================================================
 
@@ -498,6 +712,7 @@ def as_dict(db, audit):
                 "protection": step.protection,
                 "timer": step.timer,
                 "at": iso(step.captured_at),
+                "manifest": STEP_MANIFEST.get(step.label),
             }
             for step in steps
         ],
@@ -513,6 +728,7 @@ def as_dict(db, audit):
                     finding.evidence_json
                 ),
                 "reviewStatus": finding.review_status,
+                "authority": POLICY_REGISTRY.get(finding.pattern_type),
             }
             for finding in findings
         ],
@@ -596,6 +812,150 @@ def get_audit(audit_id: str):
             db,
             audit,
         )
+
+    finally:
+        db.close()
+
+
+# ============================================================
+# POLICY REGISTRY (read-only)
+# ============================================================
+
+@app.get("/api/policies")
+def list_policies():
+    return POLICY_REGISTRY
+
+
+@app.get("/api/policies/{pattern_type}")
+def get_policy(pattern_type: str):
+
+    policy = POLICY_REGISTRY.get(pattern_type)
+
+    if not policy:
+        raise HTTPException(
+            status_code=404,
+            detail="Policy not found",
+        )
+
+    return policy
+
+
+# ============================================================
+# IMPACT — measured metrics only, no invented numbers
+# ============================================================
+#
+# Closes Round 1 feedback: "Impact needs quantification."
+#
+# Every number here is computed live from what's actually in the
+# database. If there is no data yet for a metric, we report that
+# honestly (null / "not yet measured") rather than fabricating a
+# placeholder value.
+#
+@app.get("/api/impact")
+def impact():
+
+    db = SessionLocal()
+
+    try:
+        audits = db.query(Audit).all()
+        findings = db.query(Finding).all()
+        replays = db.query(Replay).all()
+
+        completed = [a for a in audits if a.status == "completed"]
+        dark_completed = [a for a in completed if a.mode == "dark"]
+        clean_completed = [a for a in completed if a.mode == "clean"]
+
+        # Evidence completeness: every finding this API returns
+        # already carries mechanism + authority_refs + evidence
+        # (evidence_json is NOT NULL at the DB level) + a policy
+        # version, so this is 100% by construction — but we still
+        # compute it rather than assume, in case that ever changes.
+        complete_findings = [
+            f for f in findings
+            if f.evidence_json
+            and f.pattern_type in POLICY_REGISTRY
+        ]
+
+        evidence_completeness = (
+            round(100 * len(complete_findings) / len(findings), 1)
+            if findings else None
+        )
+
+        # Clean-control pass rate: clean-mode audits that correctly
+        # produced zero findings.
+        clean_with_no_findings = [
+            a for a in clean_completed if len(a.findings) == 0
+        ]
+
+        clean_pass_rate = (
+            round(
+                100 * len(clean_with_no_findings) / len(clean_completed),
+                1,
+            )
+            if clean_completed else None
+        )
+
+        # Replay reproducibility: of replays actually run, how many
+        # reproduced the suspicious behavior.
+        reproduced = [r for r in replays if r.reproduced]
+
+        replay_rate = (
+            round(100 * len(reproduced) / len(replays), 1)
+            if replays else None
+        )
+
+        # Detector coverage: distinct pattern types observed vs the
+        # five accepted detectors.
+        distinct_patterns = {f.pattern_type for f in findings}
+
+        # Audit latency, from real completed runs only.
+        durations = [
+            a.duration_ms for a in completed if a.duration_ms
+        ]
+
+        avg_latency_ms = (
+            round(sum(durations) / len(durations))
+            if durations else None
+        )
+
+        return {
+            "auditsRun": len(audits),
+            "auditsCompleted": len(completed),
+            "darkAuditsCompleted": len(dark_completed),
+            "cleanAuditsCompleted": len(clean_completed),
+
+            "totalFindings": len(findings),
+            "evidenceCompletenessPct": evidence_completeness,
+
+            "cleanControlPassRatePct": clean_pass_rate,
+            "cleanControlSampleSize": len(clean_completed),
+
+            "replayReproducibilityPct": replay_rate,
+            "replaySampleSize": len(replays),
+
+            "detectorCoverage": {
+                "fired": sorted(distinct_patterns),
+                "total": len(POLICY_REGISTRY),
+                "count": len(distinct_patterns),
+            },
+
+            "avgAuditLatencyMs": avg_latency_ms,
+
+            "mlMacroF1": None,
+            "mlNote": (
+                "No trained multilingual classifier has been "
+                "benchmarked yet. Confirm Shaming currently runs on "
+                "a rule-based keyword-cue heuristic. Per the ML "
+                "specification, no accuracy figure is reported until "
+                "a frozen-test evaluation exists."
+            ),
+
+            "reviewerEfficiency": None,
+            "reviewerEfficiencyNote": (
+                "Not yet measured — requires a counterbalanced "
+                "reviewer study (>=6 reviewers) that has not been run."
+            ),
+        }
 
     finally:
         db.close()

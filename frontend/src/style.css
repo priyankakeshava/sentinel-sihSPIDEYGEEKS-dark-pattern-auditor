@@ -32,3 +32,41 @@
 .viewAudit{background:#fff;border:1px solid #dce5ef!important;color:#2d4158}
 @media(max-width:1050px){.queue{grid-template-columns:1fr}}
 @media(max-width:650px){.auditPicker{align-items:stretch;flex-direction:column}.auditPicker select{min-width:0;width:100%}}
+
+/* Why? drawer on journey steps */
+.stepTop{position:relative}
+.whyBtn{margin-left:auto;border:1px solid #dce5ef;background:#f5f8fc;color:#1559a6;font-size:9px;font-weight:800;padding:4px 7px;border-radius:6px;cursor:pointer}
+.whyBtn:hover{background:#eaf2ff}
+.whyDrawer{margin-top:9px;padding-top:9px;border-top:1px dashed #dce5ef;display:flex;flex-direction:column;gap:7px}
+.manifestRow span{display:block;font-size:8px;font-weight:900;letter-spacing:.5px;color:#8496ac;text-transform:uppercase;margin-bottom:2px}
+.manifestRow p{margin:0;font-size:10px;color:#374a63;line-height:1.4}
+
+/* Authority block on findings */
+.authorityBox{margin-top:10px;padding:10px;border-radius:8px;background:#f5f9ff;border:1px solid #dce9fb}
+.authorityTop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.authorityTop span{font-size:8px;font-weight:900;letter-spacing:1px;color:#5b7ba0}
+.authorityTop b{font-size:10px;color:#15395f;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.authorityRefs{margin:5px 0 0;font-size:10px;color:#3a5878}
+.mechanism{margin:5px 0 0;font-size:10px;color:#55677e;line-height:1.4}
+.detectorMethod{margin:7px 0 0;font-size:10px;color:#7e5b06;background:#fff8e6;padding:6px 8px;border-radius:6px;line-height:1.4}
+
+/* Authority Registry page */
+.policyGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.policyCard{background:#fff;border:1px solid #dce5ef;border-radius:12px;padding:15px}
+.policyTop{display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:9px}
+.policyTop h3{margin:0;font-size:15px}
+.policyId{font-size:9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#5b7ba0;background:#f0f5fb;padding:3px 6px;border-radius:5px;white-space:nowrap}
+.policyRow{margin-top:8px}
+.policyRow span{display:block;font-size:8px;font-weight:900;letter-spacing:.5px;color:#8496ac;text-transform:uppercase}
+.policyRow p{margin:2px 0 0;font-size:11px;color:#374a63;line-height:1.4}
+.policyRow.highlight p{color:#7e5b06;background:#fff8e6;padding:6px 8px;border-radius:6px;margin-top:4px}
+.policyGate{margin-top:10px;padding:7px 9px;border-radius:7px;background:#edf9f2;color:#1a7544;font-size:9px;font-weight:800}
+.litPanel{margin-top:16px}
+.litPanel h3{margin:0 0 12px;font-size:15px}
+.litTable{width:100%;border-collapse:collapse;font-size:11px}
+.litTable th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#8496ac;padding:8px;border-bottom:2px solid #edf1f5}
+.litTable td{padding:9px 8px;border-bottom:1px solid #edf1f5;color:#374a63;line-height:1.4;vertical-align:top}
+@media(max-width:1050px){.policyGrid{grid-template-columns:1fr}.litTable{font-size:10px}}
+
+/* Impact page */
+.mlNote{margin:0;font-size:12px;color:#55677e;line-height:1.5}

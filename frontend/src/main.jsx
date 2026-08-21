@@ -9,6 +9,8 @@ const NAV = [
   ["journey", "Journey Evidence"],
   ["replay", "Replay Verification"],
   ["review", "Review Queue"],
+  ["authority", "Authority Registry"],
+  ["impact", "Impact"],
 ];
 
 function App() {
@@ -245,6 +247,10 @@ function App() {
               onViewAudit={viewAudit}
             />
           )}
+
+          {view === "authority" && <AuthorityView />}
+
+          {view === "impact" && <ImpactView />}
         </main>
       </div>
     </div>
@@ -399,36 +405,7 @@ function JourneySection({ audit }) {
       {audit.steps?.length ? (
         <div className="journey">
           {audit.steps.map((step) => (
-            <div className="journeyCard" key={step.step}>
-              <div className="stepTop">
-                <b>{String(step.step).padStart(2, "0")}</b>
-
-                <span>{step.label}</span>
-              </div>
-
-              <img src={API + step.screenshot} alt={step.label} />
-
-              <div className="state">
-                <span>Price</span>
-                <b>{step.price || "—"}</b>
-              </div>
-
-              <div className="state">
-                <span>Cart items</span>
-                <b>{step.cart.length}</b>
-              </div>
-
-              <div
-                className="hash"
-                title={step.screenshotSha256 || ""}
-              >
-                SHA-256 {step.screenshotSha256?.slice(0, 12)}…
-              </div>
-
-              {step.timer && (
-                <div className="timerState">⏱ {step.timer}</div>
-              )}
-            </div>
+            <JourneyCard key={step.step} step={step} />
           ))}
         </div>
       ) : (
@@ -481,6 +458,78 @@ function JourneySection({ audit }) {
         )}
       </div>
     </section>
+  );
+}
+
+function JourneyCard({ step }) {
+  const [open, setOpen] = useState(false);
+  const manifest = step.manifest;
+
+  return (
+    <div className="journeyCard">
+      <div className="stepTop">
+        <b>{String(step.step).padStart(2, "0")}</b>
+
+        <span>{step.label}</span>
+
+        {manifest && (
+          <button
+            className="whyBtn"
+            onClick={() => setOpen((v) => !v)}
+            title="Why was this action performed?"
+          >
+            {open ? "Why? ▲" : "Why? ▾"}
+          </button>
+        )}
+      </div>
+
+      <img src={API + step.screenshot} alt={step.label} />
+
+      <div className="state">
+        <span>Price</span>
+        <b>{step.price || "—"}</b>
+      </div>
+
+      <div className="state">
+        <span>Cart items</span>
+        <b>{step.cart.length}</b>
+      </div>
+
+      <div className="hash" title={step.screenshotSha256 || ""}>
+        SHA-256 {step.screenshotSha256?.slice(0, 12)}…
+      </div>
+
+      {step.timer && <div className="timerState">⏱ {step.timer}</div>}
+
+      {open && manifest && (
+        <div className="whyDrawer">
+          <ManifestRow label="Intent" value={manifest.intent} />
+          <ManifestRow label="Action" value={manifest.action} />
+          <ManifestRow label="Rationale" value={manifest.rationale} />
+          <ManifestRow label="Hypothesis" value={manifest.hypothesis} />
+          <ManifestRow label="Authority" value={manifest.authority} />
+          <ManifestRow
+            label="Expected observation"
+            value={manifest.expected_observation}
+          />
+          <ManifestRow
+            label="Evidence required"
+            value={(manifest.evidence_required || []).join(", ")}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ManifestRow({ label, value }) {
+  if (!value) return null;
+
+  return (
+    <div className="manifestRow">
+      <span>{label}</span>
+      <p>{value}</p>
+    </div>
   );
 }
 
@@ -609,6 +658,27 @@ function Finding({ f, review }) {
       </div>
 
       <p>{f.explanation}</p>
+
+      {f.authority && (
+        <div className="authorityBox">
+          <div className="authorityTop">
+            <span>AUTHORITY</span>
+            <b>{f.authority.policy_id}</b>
+          </div>
+
+          <p className="authorityRefs">
+            {(f.authority.authority_refs || []).join("; ")}
+          </p>
+
+          <p className="mechanism">{f.authority.mechanism}</p>
+
+          {f.authority.detector_method && (
+            <p className="detectorMethod">
+              <b>Detection method:</b> {f.authority.detector_method}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="evidenceBox">
         <div>
@@ -935,6 +1005,229 @@ async function reviewFromQueue(
    * review() calls load().
    */
   onSelect(item.audit.id);
+}
+
+function AuthorityView() {
+  const [policies, setPolicies] = useState(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(API + "/api/policies")
+      .then((r) => r.json())
+      .then(setPolicies)
+      .catch(() => setError(true));
+  }, []);
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="SENTINEL · AUTHORITY"
+        title="Authority & Policy Registry"
+        description="Every finding Sentinel produces is required to carry a policy_id, an authority citation and a stated mechanism before it can enter the review queue. This registry is the source of truth for that mapping."
+      />
+
+      {error && (
+        <div className="empty compact">
+          Could not reach the policy registry. Is the backend running?
+        </div>
+      )}
+
+      {!error && !policies && (
+        <div className="empty compact">Loading policy registry…</div>
+      )}
+
+      {policies && (
+        <div className="policyGrid">
+          {Object.entries(policies).map(([type, policy]) => (
+            <div className="policyCard" key={type}>
+              <div className="policyTop">
+                <h3>{type}</h3>
+                <span className="policyId">{policy.policy_id}</span>
+              </div>
+
+              <div className="policyRow">
+                <span>Authority</span>
+                <p>{(policy.authority_refs || []).join("; ")}</p>
+              </div>
+
+              <div className="policyRow">
+                <span>Mechanism</span>
+                <p>{policy.mechanism}</p>
+              </div>
+
+              <div className="policyRow">
+                <span>Required predicates</span>
+                <p>{(policy.required_predicates || []).join(", ")}</p>
+              </div>
+
+              <div className="policyRow">
+                <span>Clean control</span>
+                <p>{policy.clean_control}</p>
+              </div>
+
+              {policy.detector_method && (
+                <div className="policyRow highlight">
+                  <span>Detection method</span>
+                  <p>{policy.detector_method}</p>
+                </div>
+              )}
+
+              <div className="policyGate">
+                {policy.reviewRequirement}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="panel litPanel">
+        <h3>Prior work — defendable, not exaggerated</h3>
+
+        <table className="litTable">
+          <thead>
+            <tr>
+              <th>Prior work</th>
+              <th>What it proves</th>
+              <th>What SENTINEL adds</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mathur et al. 2019</td>
+              <td>Dark patterns are measurable at web scale.</td>
+              <td>Journey/action/state provenance + authority mapping.</td>
+            </tr>
+            <tr>
+              <td>Yada et al. 2022</td>
+              <td>Text dataset + BERT-family baselines.</td>
+              <td>Multilingual cue model tied to behavioral evidence.</td>
+            </tr>
+            <tr>
+              <td>AidUI 2023</td>
+              <td>CV + NLP can localize screenshot dark patterns.</td>
+              <td>State transitions and policy-grounded evidence beyond a screenshot.</td>
+            </tr>
+            <tr>
+              <td>Dark Patterns Buster Hackathon 2023</td>
+              <td>India already demonstrated LLM/DOM/multilingual approaches.</td>
+              <td>Does not claim generic AI detection as novelty.</td>
+            </tr>
+            <tr>
+              <td>DPGuard 2025</td>
+              <td>Modern multimodal UI-instance detection at scale.</td>
+              <td>Policy-oriented causal journey evidence.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function ImpactView() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(API + "/api/impact")
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => setError(true));
+  }, []);
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="SENTINEL · IMPACT"
+        title="Measured Impact"
+        description="Every figure below is computed live from audits actually run and stored in the database. Where nothing has been measured yet, that is reported honestly rather than estimated."
+      />
+
+      {error && (
+        <div className="empty compact">
+          Could not reach the impact API. Is the backend running?
+        </div>
+      )}
+
+      {!error && !data && (
+        <div className="empty compact">Loading measured impact…</div>
+      )}
+
+      {data && (
+        <>
+          <div className="metrics">
+            <Metric label="Audits run" value={data.auditsRun} />
+            <Metric label="Audits completed" value={data.auditsCompleted} />
+            <Metric
+              label="Total findings"
+              value={data.totalFindings}
+            />
+            <Metric
+              label="Avg audit latency"
+              value={
+                data.avgAuditLatencyMs
+                  ? (data.avgAuditLatencyMs / 1000).toFixed(1) + "s"
+                  : "Not yet measured"
+              }
+            />
+          </div>
+
+          <div className="metrics" style={{ marginTop: 12 }}>
+            <Metric
+              label="Evidence completeness"
+              value={
+                data.evidenceCompletenessPct != null
+                  ? data.evidenceCompletenessPct + "%"
+                  : "Not yet measured"
+              }
+            />
+            <Metric
+              label={
+                "Clean-control pass rate (n=" +
+                data.cleanControlSampleSize +
+                ")"
+              }
+              value={
+                data.cleanControlPassRatePct != null
+                  ? data.cleanControlPassRatePct + "%"
+                  : "Not yet measured"
+              }
+            />
+            <Metric
+              label={
+                "Replay reproducibility (n=" + data.replaySampleSize + ")"
+              }
+              value={
+                data.replayReproducibilityPct != null
+                  ? data.replayReproducibilityPct + "%"
+                  : "Not yet measured"
+              }
+            />
+            <Metric
+              label={
+                "Detector coverage (" +
+                data.detectorCoverage.count +
+                "/" +
+                data.detectorCoverage.total +
+                ")"
+              }
+              value={data.detectorCoverage.fired.join(", ") || "None yet"}
+            />
+          </div>
+
+          <div className="panel">
+            <h3>ML specification status</h3>
+            <p className="mlNote">{data.mlNote}</p>
+          </div>
+
+          <div className="panel">
+            <h3>Reviewer efficiency</h3>
+            <p className="mlNote">{data.reviewerEfficiencyNote}</p>
+          </div>
+        </>
+      )}
+    </>
+  );
 }
 
 createRoot(document.getElementById("root")).render(
