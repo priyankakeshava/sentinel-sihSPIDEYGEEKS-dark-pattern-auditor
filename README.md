@@ -28,7 +28,7 @@ MySQL is the intended architecture. If MySQL is not running, the backend automat
 
 From the project folder:
 
-    docker compose up --build
+    docker compose up ---build
 
 Then open:
 
