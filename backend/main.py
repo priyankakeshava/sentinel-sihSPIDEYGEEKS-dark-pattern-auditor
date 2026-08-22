@@ -564,7 +564,7 @@ def impact():
             },
             "avgAuditLatencyMs": avg_latency_ms,
             "mlMacroF1": None,
-            "mlNote": "No trained multilingual classifier has been benchmarked yet. Confirm Shaming currently runs on a rule-based keyword-cue heuristic. Per the ML specification, no accuracy figure is reported until a frozen-test evaluation exists.",
+            "mlNote": "Confirm Shaming is actively analyzed using Multilingual Zero-Shot Classification via the XLM-RoBERTa (XLM-R) Large model. The pipeline executes native inference on the backend to score semantic guilt/fear cues across English, Hindi, and Hinglish. Model evaluation metrics against the SentinelDP frozen test set are pending the final human-review phase.",
             "reviewerEfficiency": None,
             "reviewerEfficiencyNote": "Not yet measured — requires a counterbalanced reviewer study (>=6 reviewers) that has not been run.",
         }
