@@ -248,7 +248,7 @@ This makes the prototype reproducible during demonstrations and validation witho
        ┌──────┴──────┐
        ▼             ▼
 ┌────────────┐ ┌────────────────┐
-│   MySQL    │ │ Evidence Store │
+│ PostgreSQL │ │ Evidence Store │
 │ Audit Data │ │ Screenshots    │
 └────────────┘ └────────────────┘
               │
@@ -270,7 +270,7 @@ This makes the prototype reproducible during demonstrations and validation witho
 |---|---|---|
 | Browser Automation | Playwright | Executes isolated browser journeys |
 | Backend | Python + FastAPI | Audit orchestration, detection, replay and APIs |
-| Database | MySQL | Stores audits, journey steps, findings and replay results |
+| Database | PostgresSQL | Stores audits, journey steps, findings and replay results |
 | Frontend | React / Next.js | Investigation console |
 | Controlled Website | Node.js | DarkShop demonstration environment |
 | Evidence Integrity | SHA-256 | Evidence hashing |
@@ -322,9 +322,9 @@ Install:
 - Python 3.11+
 - Node.js
 - npm
-- MySQL for the intended database configuration
+- postgresSQL for the intended database configuration
 
-A SQLite fallback is available for local development when MySQL is unavailable.
+
 
 ### Local Development
 
