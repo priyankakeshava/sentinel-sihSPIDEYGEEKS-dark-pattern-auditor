@@ -9,7 +9,7 @@ If Docker Desktop is not installed, use the local-development scripts instead.
 Then verify:
 
 1. `http://127.0.0.1:5173` opens.
-2. The console says **MySQL** as the evidence store.
+2. The console says **PostgreSQL** as the evidence store.
 3. Click **Run Manipulative Audit**.
 4. Five journey steps complete.
 5. Findings include the five MVP detectors.
